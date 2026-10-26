@@ -1,0 +1,20 @@
+[package]
+name = "omniviewer-cli"
+version = "0.5.0"
+description = "Omniviewer CLI：检索 / 预览 / 水印 / 缓存 / MCP"
+authors = ["you"]
+edition = "2024"
+
+[[bin]]
+name = "omniviewer"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+omniviewer-core = { path = "../core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rmcp = { version = "3", features = ["server", "schemars", "transport-io", "transport-streamable-http-server"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
+tokio-util = "0.7"
+axum = "0.8"

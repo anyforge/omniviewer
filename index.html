@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Omniviewer</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <div id="app">
+      <!-- 工具栏（设置 + 新建 + 面包屑） -->
+      <div class="toolbar">
+        <button class="tool-btn" id="open-settings" data-i18n-title="btn.settings" title="设置">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <div class="add-wrap">
+          <button class="tool-btn" id="add-menu-btn" data-i18n-title="btn.add" title="新建">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 2.5v11M2.5 8h11"/></svg>
+          </button>
+          <div class="add-menu" id="add-menu" style="display:none">
+            <div class="ctx-item" data-action="open-file" data-i18n="btn.openFile">打开文件</div>
+            <div class="ctx-item" data-action="open-folder" data-i18n="btn.openFolder">打开文件夹</div>
+            <div class="ctx-divider"></div>
+            <div class="ctx-item" data-action="add-connection" data-i18n="rail.add">添加连接</div>
+          </div>
+        </div>
+        <div class="crumb"><b id="crumb-source" data-i18n="group.local">本地</b><span class="sep">/</span><span id="crumb-path" data-i18n="crumb.path.none">未打开</span></div>
+      </div>
+
+      <!-- 标签栏（打开的文件卡片，多 tab） -->
+      <div class="tabstrip" id="tabstrip"></div>
+
+      <!-- 三栏主体（分割线可拖拽） -->
+      <div class="main">
+        <!-- 左栏：连接实例列表 -->
+        <div class="rail" id="pane-rail">
+          <div class="rail-head" data-i18n="rail.sources">数据源</div>
+          <div class="rail-scroll">
+            <div class="group">
+              <div class="group-head"><span data-i18n="group.local">本地</span><span class="n mono" id="local-count">0</span></div>
+              <div id="local-conns"></div>
+            </div>
+            <div class="group">
+              <div class="group-head"><span>GitHub</span><span class="n mono" id="github-count">0</span></div>
+              <div id="github-conns"></div>
+            </div>
+            <div class="group">
+              <div class="group-head"><span>GitLab</span><span class="n mono" id="gitlab-count">0</span></div>
+              <div id="gitlab-conns"></div>
+            </div>
+            <div class="group">
+              <div class="group-head"><span>HTTP</span><span class="n mono" id="http-count">0</span></div>
+              <div id="http-conns"></div>
+            </div>
+            <div class="group">
+              <div class="group-head"><span>WebDAV</span><span class="n mono" id="webdav-count">0</span></div>
+              <div id="webdav-conns"></div>
+            </div>
+            <div class="group">
+              <div class="group-head"><span>SFTP</span><span class="n mono" id="sftp-count">0</span></div>
+              <div id="sftp-conns"></div>
+            </div>
+            <div class="group">
+              <div class="group-head"><span>S3</span><span class="n mono" id="s3-count">0</span></div>
+              <div id="s3-conns"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider" data-resize="rail"></div>
+
+        <!-- 中栏：文件树 -->
+        <div class="tree" id="pane-tree">
+          <div class="tree-search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+            <input id="search-input" type="text" data-i18n-ph="search.placeholder" placeholder="搜索文件…" />
+            <button class="search-clear" id="search-clear" data-i18n-title="search.clear" title="清除" style="display:none">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+          <div class="head"><span id="tree-head-label" data-i18n="tree.files">文件树</span><span class="mono" id="tree-count">—</span></div>
+          <div class="tree-body" id="tree-body">
+            <div class="tree-empty" id="tree-empty" data-i18n="tree.empty">点击「打开文件夹」浏览本地目录，或「＋添加连接」接入远程源</div>
+          </div>
+          <div class="tree-loading" id="tree-loading" style="display:none"><span class="ring"></span><span data-i18n="tree.loading">加载中…</span></div>
+        </div>
+
+        <div class="divider" data-resize="tree"></div>
+
+        <!-- 右栏：预览区 -->
+        <div class="preview">
+          <div class="preview-bar">
+            <span data-i18n="preview.title">预览</span>
+            <span class="fmt" id="preview-format">—</span>
+            <span class="mono" id="preview-name" data-i18n="preview.none">未打开文件</span>
+            <button class="tool-btn pv-dl" id="preview-download" data-i18n-title="preview.download" title="下载" style="display:none">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>
+              <span data-i18n="preview.download">下载</span>
+            </button>
+          </div>
+          <div class="preview-body">
+            <div class="preview-empty" id="preview-empty">
+              <div class="mark">Omniviewer</div>
+              <div class="sub" data-i18n="preview.empty.sub">选择文件开始预览</div>
+            </div>
+            <flyfish-file-viewer id="viewer" theme="dark" toolbar-position="bottom-right" toolbar='{"download":false,"print":false,"theme":false,"exportHtml":false}' style="display:none"></flyfish-file-viewer>
+            <pre id="text-view" class="text-view" style="display:none"></pre>
+            <canvas id="watermark-layer" style="display:none"></canvas>
+            <div class="preview-loading" id="preview-loading" style="display:none"><span class="ring"></span><span data-i18n="preview.loading">加载中…</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 状态栏 -->
+      <div class="statusbar">
+        <div class="l"><span class="dot"></span><span id="app-version">Omniviewer</span> · <span data-i18n="status.ready">就绪</span></div>
+        <div class="r" id="status-info"></div>
+      </div>
+    </div>
+
+    <!-- 右键菜单 -->
+    <div class="ctx-menu" id="ctx-menu" style="display:none">
+      <div class="ctx-item" data-action="save-as" data-i18n="ctx.saveAs">另存为…</div>
+      <div class="ctx-item" data-action="zip" data-i18n="ctx.zip">压缩为 Zip…</div>
+      <div class="ctx-item" data-action="print-watermark" data-file-only data-i18n="ctx.printWatermark">打印带水印</div>
+      <div class="ctx-item" data-action="save-watermark" data-wm-only data-i18n="ctx.saveWatermark">另存为带水印…</div>
+      <div class="ctx-item" data-action="embed-watermark" data-wm-only data-i18n="ctx.embedWatermark">嵌入暗水印</div>
+      <div class="ctx-item" data-action="extract-watermark" data-wm-only data-i18n="ctx.extractWatermark">提取暗水印</div>
+      <div class="ctx-item" data-action="embed-text-watermark" data-text-wm-only data-i18n="ctx.embedTextWatermark">嵌入可去除水印</div>
+      <div class="ctx-item" data-action="embed-pdf-visible" data-pdf-visible-only data-i18n="ctx.embedPdfVisible">嵌入明水印</div>
+      <div class="ctx-item" data-action="remove-text-watermark" data-remove-wm-only data-i18n="ctx.removeTextWatermark">去除水印</div>
+      <div class="ctx-divider"></div>
+      <div class="ctx-item" data-action="refresh" data-i18n="ctx.refresh">刷新</div>
+      <div class="ctx-item" data-action="copy-path" data-i18n="ctx.copyPath">复制路径</div>
+      <div class="ctx-item" data-action="reveal" data-i18n="ctx.reveal">在访达中显示</div>
+    </div>
+
+    <!-- 数据源右键菜单 -->
+    <div class="ctx-menu" id="conn-menu" style="display:none">
+      <div class="ctx-item" data-action="refresh" data-i18n="ctx.refresh">刷新</div>
+      <div class="ctx-item" data-action="edit" data-i18n="ctx.edit">编辑</div>
+      <div class="ctx-item" data-action="update" data-i18n="ctx.update">更新</div>
+      <div class="ctx-divider"></div>
+      <div class="ctx-item" data-action="delete" data-i18n="ctx.delete">删除</div>
+    </div>
+
+    <!-- 添加/编辑连接弹窗 -->
+    <div class="modal-backdrop" id="conn-modal" style="display:none">
+      <div class="modal modal-lg">
+        <div class="modal-head" id="conn-modal-title" data-i18n="connModal.title">添加数据源连接</div>
+        <div class="conn-tabs" id="conn-tabs">
+          <button class="conn-tab active" data-kind="github">GitHub</button>
+          <button class="conn-tab" data-kind="gitlab">GitLab</button>
+          <button class="conn-tab" data-kind="http" data-i18n="connType.http">HTTP 静态</button>
+          <button class="conn-tab" data-kind="webdav">WebDAV</button>
+          <button class="conn-tab" data-kind="sftp">SFTP</button>
+          <button class="conn-tab" data-kind="s3">S3</button>
+        </div>
+        <div class="modal-body">
+          <div class="conn-pane" data-pane="github">
+            <p class="hint" data-i18n="connModal.githubHint">GitHub 仓库，如 https://github.com/owner/repo 或 owner/repo；私有仓库填 Token。</p>
+            <label class="field"><span data-i18n="connModal.repo">仓库</span><input id="gh-repo" placeholder="owner/repo 或 https://github.com/owner/repo" /></label>
+            <label class="field"><span data-i18n="connModal.token">Token（私有仓库可选）</span><input id="gh-token" type="password" placeholder="ghp_…" /></label>
+          </div>
+          <div class="conn-pane" data-pane="gitlab" style="display:none">
+            <p class="hint" data-i18n="connModal.gitlabHint">GitLab 项目完整链接，如 https://gitlab.com/group/project。</p>
+            <label class="field"><span data-i18n="connModal.repo">项目链接</span><input id="gl-repo" placeholder="https://gitlab.com/group/project" /></label>
+            <label class="field"><span data-i18n="connModal.token">Token（私有项目可选）</span><input id="gl-token" type="password" placeholder="glpat-…" /></label>
+          </div>
+          <div class="conn-pane" data-pane="http" style="display:none">
+            <p class="hint" data-i18n="connModal.httpHint">静态文件服务器地址，如 http://server/（支持 autoindex 目录列表）。</p>
+            <label class="field"><span>URL</span><input id="http-url" placeholder="http://server/" /></label>
+            <label class="field"><span data-i18n="connModal.user">用户名（可选）</span><input id="http-user" placeholder="" /></label>
+            <label class="field"><span data-i18n="connModal.pass">密码（可选）</span><input id="http-pass" type="password" placeholder="" /></label>
+          </div>
+          <div class="conn-pane" data-pane="webdav" style="display:none">
+            <p class="hint" data-i18n="connModal.davHint">WebDAV 共享地址 + 凭证。</p>
+            <label class="field"><span>URL</span><input id="dav-url" placeholder="https://dav.example.com/" /></label>
+            <label class="field"><span data-i18n="connModal.user">用户名</span><input id="dav-user" placeholder="" /></label>
+            <label class="field"><span data-i18n="connModal.pass">密码</span><input id="dav-pass" type="password" placeholder="" /></label>
+          </div>
+          <div class="conn-pane" data-pane="sftp" style="display:none">
+            <p class="hint" data-i18n="connModal.sftpHint">SSH 服务器，如 host 或 sftp://user@host:port/path。</p>
+            <label class="field"><span data-i18n="connModal.host">主机</span><input id="sftp-host" placeholder="host 或 host:22" /></label>
+            <label class="field"><span data-i18n="connModal.port">端口</span><input id="sftp-port" type="number" value="22" /></label>
+            <label class="field"><span data-i18n="connModal.user">用户名</span><input id="sftp-user" placeholder="" /></label>
+            <label class="field"><span data-i18n="connModal.pass">密码</span><input id="sftp-pass" type="password" placeholder="" /></label>
+            <label class="field"><span data-i18n="connModal.root">路径（默认 /）</span><input id="sftp-root" placeholder="/" /></label>
+          </div>
+          <div class="conn-pane" data-pane="s3" style="display:none">
+            <p class="hint" data-i18n="connModal.s3Hint">S3 兼容存储，Endpoint 如 https://s3.amazonaws.com。</p>
+            <label class="field"><span>Endpoint</span><input id="s3-endpoint" placeholder="https://s3.amazonaws.com" /></label>
+            <label class="field"><span data-i18n="connModal.region">区域</span><input id="s3-region" placeholder="us-east-1" /></label>
+            <label class="field"><span>Bucket</span><input id="s3-bucket" placeholder="" /></label>
+            <label class="field"><span>Access Key</span><input id="s3-ak" placeholder="" /></label>
+            <label class="field"><span>Secret Key</span><input id="s3-sk" type="password" placeholder="" /></label>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn" id="conn-cancel" data-i18n="connModal.cancel">取消</button>
+          <button class="btn primary" id="conn-ok" data-i18n="connModal.ok">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 压缩包密码弹窗 -->
+    <div class="modal-backdrop" id="archive-password-modal" style="display:none">
+      <div class="modal">
+        <div class="modal-head" data-i18n="archivePw.title">输入密码</div>
+        <div class="modal-body">
+          <label class="field">
+            <span data-i18n="archivePw.description">此压缩包已加密，请输入密码</span>
+            <input id="archive-password-input" type="password" data-i18n-ph="archivePw.placeholder" placeholder="密码" />
+            <p class="archive-password-error" id="archive-password-error"></p>
+          </label>
+        </div>
+        <div class="modal-foot">
+          <button class="btn" id="archive-password-cancel" data-i18n="archivePw.cancel">取消</button>
+          <button class="btn primary" id="archive-password-ok" data-i18n="archivePw.confirm">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下载进度弹窗 -->
+    <div class="modal-backdrop" id="progress-modal" style="display:none">
+      <div class="modal">
+        <div class="modal-head" data-i18n="progress.title">下载中</div>
+        <div class="modal-body">
+          <div class="progress-row"><span id="progress-text" data-i18n="progress.preparing">准备中…</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn" id="progress-cancel" data-i18n="progress.cancel">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div class="modal-backdrop" id="settings-modal" style="display:none">
+      <div class="modal settings-modal">
+        <div class="modal-head"><span data-i18n="settings.title">设置</span><button class="modal-x" id="settings-close" title="关闭">×</button></div>
+        <div class="settings-tabs">
+          <button class="stab on" data-tab="general" data-i18n="settings.tab.general">常规</button>
+          <button class="stab" data-tab="theme" data-i18n="settings.tab.theme">主题</button>
+          <button class="stab" data-tab="watermark" data-i18n="settings.tab.watermark">水印</button>
+          <button class="stab" data-tab="download" data-i18n="settings.tab.download">下载</button>
+          <button class="stab" data-tab="about" data-i18n="settings.tab.about">关于</button>
+        </div>
+        <div class="modal-body">
+          <div class="stab-pane" data-pane="general">
+            <label class="field">
+              <span data-i18n="settings.language">语言</span>
+              <div class="seg" id="set-language">
+                <span class="opt" data-v="en">English</span>
+                <span class="opt" data-v="zh">中文</span>
+              </div>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.fontSize">界面字号</span>
+              <div class="seg" id="set-font">
+                <span class="opt" data-v="12" data-i18n="settings.fontSize.small">小</span>
+                <span class="opt" data-v="13" data-i18n="settings.fontSize.normal">标准</span>
+                <span class="opt" data-v="15" data-i18n="settings.fontSize.large">大</span>
+              </div>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.density">界面密度</span>
+              <div class="seg" id="set-density">
+                <span class="opt" data-v="compact" data-i18n="settings.density.compact">紧凑</span>
+                <span class="opt" data-v="comfortable" data-i18n="settings.density.comfortable">舒适</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="stab-pane" data-pane="theme" style="display:none">
+            <label class="field">
+              <span data-i18n="settings.theme">界面主题</span>
+              <div class="seg" id="set-theme">
+                <span class="opt" data-v="dark" data-i18n="settings.theme.dark">深色</span>
+                <span class="opt" data-v="light" data-i18n="settings.theme.light">浅色</span>
+              </div>
+            </label>
+            <div class="palette-group" data-variant="dark">
+              <div class="stab-section" data-i18n="settings.ui.dark">界面配色 · 深色</div>
+              <div id="ui-dark-colors" class="palette"></div>
+              <div class="stab-section" data-i18n="settings.code.dark">代码配色 · 深色（Dracula）</div>
+              <div id="code-dark-colors" class="palette"></div>
+            </div>
+            <div class="palette-group" data-variant="light">
+              <div class="stab-section" data-i18n="settings.ui.light">界面配色 · 浅色</div>
+              <div id="ui-light-colors" class="palette"></div>
+              <div class="stab-section" data-i18n="settings.code.light">代码配色 · 浅色（GitHub Light）</div>
+              <div id="code-light-colors" class="palette"></div>
+            </div>
+          </div>
+
+          <div class="stab-pane" data-pane="watermark" style="display:none">
+            <div class="stab-section" data-i18n="settings.wmVisible">明水印</div>
+            <div class="wm-hint" data-i18n="settings.wmVisible.hint">看得见，防拍屏/截图外传。开启后预览区实时平铺叠加；下载带水印：右键图片「另存为带水印」、右键 PDF「嵌入明水印」、右键 Word「嵌入可去除水印」。</div>
+            <label class="field">
+              <span data-i18n="settings.wm">明水印开关</span>
+              <div class="seg" id="set-wm-enabled">
+                <span class="opt" data-v="1" data-i18n="settings.wmOn">开</span>
+                <span class="opt" data-v="0" data-i18n="settings.wmOff">关</span>
+              </div>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmText">水印文字</span>
+              <input id="set-wm-text" type="text" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmFont">字体</span>
+              <select id="set-wm-font">
+                <option value="sans" data-i18n="settings.wmFont.sans">系统</option>
+                <option value="serif" data-i18n="settings.wmFont.serif">衬线</option>
+                <option value="mono" data-i18n="settings.wmFont.mono">等宽</option>
+              </select>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmSize">字号</span>
+              <input id="set-wm-size" type="number" min="8" max="120" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmColor">颜色</span>
+              <input id="set-wm-color" type="color" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmOpacity">透明度（%）</span>
+              <input id="set-wm-opacity" type="number" min="1" max="100" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmAngle">旋转角度（°）</span>
+              <input id="set-wm-angle" type="number" min="-90" max="90" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmDensity">密度</span>
+              <div class="seg" id="set-wm-density">
+                <span class="opt" data-v="low" data-i18n="settings.wmDensity.low">低</span>
+                <span class="opt" data-v="medium" data-i18n="settings.wmDensity.medium">中</span>
+                <span class="opt" data-v="high" data-i18n="settings.wmDensity.high">高</span>
+              </div>
+            </label>
+            <div class="stab-section" data-i18n="settings.wmInvisible">暗水印</div>
+            <div class="wm-hint" data-i18n="settings.wmInvisible.hint">看不见，用于溯源外泄者。① 上方填标识（工号/邮箱）② 右键文件「嵌入暗水印」③ 外传后对泄露文件右键「提取暗水印」查出是谁。屏幕水印：开开关 → 截图外泄 → 下方「上传截图解码」溯源。</div>
+            <label class="field">
+              <span data-i18n="settings.wmUserId">暗水印标识（溯源，填工号/邮箱）</span>
+              <input id="set-wm-userid" type="text" data-i18n-ph="settings.wmUserId.ph" placeholder="user" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmScreen">屏幕水印（抗截图点阵）</span>
+              <div class="seg" id="set-wm-screen">
+                <span class="opt" data-v="1" data-i18n="settings.wmOn">开</span>
+                <span class="opt" data-v="0" data-i18n="settings.wmOff">关</span>
+              </div>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.wmDecode">解码屏幕水印（溯源）</span>
+              <div class="cache-row">
+                <input id="wm-decode-file" type="file" accept="image/*" style="display:none" />
+                <button class="btn" id="wm-decode-btn" data-i18n="settings.wmDecodeBtn">上传截图解码</button>
+                <span class="mono" id="wm-decode-result"></span>
+              </div>
+            </label>
+          </div>
+
+          <div class="stab-pane" data-pane="download" style="display:none">
+            <label class="field">
+              <span data-i18n="settings.chunk">大文本分块大小（MB）</span>
+              <input id="set-chunk" type="number" min="1" max="64" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.dlConcurrency">下载并发数</span>
+              <input id="set-dl-concurrency" type="number" min="1" max="16" />
+            </label>
+            <label class="field">
+              <span data-i18n="settings.zipPassword">Zip 加密密码</span>
+              <div class="cache-row">
+                <select id="set-zip-password"></select>
+                <input id="zip-pw-new" type="password" data-i18n-ph="settings.zipPassword.ph" placeholder="新密码" />
+                <button class="btn" id="zip-pw-add" data-i18n="settings.zipPw.add">添加</button>
+                <button class="btn" id="zip-pw-del" data-i18n="settings.zipPw.del">删除</button>
+              </div>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.cache">预览缓存</span>
+              <div class="cache-row">
+                <span class="mono" id="cache-size">—</span>
+                <button class="btn" id="cache-clear" data-i18n="settings.cacheClear">清空缓存</button>
+              </div>
+            </label>
+          </div>
+
+          <div class="stab-pane" data-pane="about" style="display:none">
+            <label class="field">
+              <span data-i18n="settings.about.version">版本</span>
+              <span class="mono" id="about-version">—</span>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.about.author">作者</span>
+              <span id="about-author">AnyForge</span>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.about.update">更新</span>
+              <button class="btn" id="check-update" data-i18n="settings.about.checkUpdate">检查更新</button>
+            </label>
+            <label class="field">
+              <span data-i18n="settings.about.cli">omniviewer CLI</span>
+              <div class="cache-row">
+                <button class="btn" id="install-cli" data-i18n="settings.about.installCli">安装 CLI 到 PATH</button>
+                <span class="mono" id="cli-status">—</span>
+              </div>
+              <span class="hint" data-i18n="settings.about.cliHint">安装后可在终端直接运行 omniviewer（~/.local/bin）</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

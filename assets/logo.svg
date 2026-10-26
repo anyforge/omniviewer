@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <!-- 整体缩到 88% + 居中，留出 margin，避免 Dock 里显得过大 -->
+  <g transform="translate(30.72 30.72) scale(0.88)">
+    <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+    <!-- 文档（带折角） -->
+    <path d="M166 126h132l90 90v170H166z" fill="#ffffff"/>
+    <path d="M298 126v90h90z" fill="#e4e0f7"/>
+    <path d="M198 250h116M198 290h116M198 330h72" stroke="#cfc8ec" stroke-width="12" stroke-linecap="round"/>
+    <!-- 眼睛（查看 / Omniviewer 的 O） -->
+    <path d="M168 254c0-48 40-84 88-84s88 36 88 84-40 84-88 84-88-36-88-84z" fill="none" stroke="#7c3aed" stroke-width="22" stroke-linecap="round"/>
+    <circle cx="256" cy="254" r="30" fill="#7c3aed"/>
+    <circle cx="247" cy="244" r="10" fill="#ffffff"/>
+  </g>
+</svg>

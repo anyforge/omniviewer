@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Omniviewer mockup</title>
+<style>
+  :root {
+    --win-bg:#14171b; --panel:#171a1f; --raised:#1d2126; --border:#262b31;
+    --text:#f2f4f7; --muted:#b4bbc4; --faint:#9099a5; --accent:#e6a23c;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#0b0d10; font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; }
+  #app { width:1200px; height:760px; background:var(--win-bg); color:var(--text); display:flex; flex-direction:column; border-radius:10px; overflow:hidden; box-shadow:0 24px 80px rgba(0,0,0,.6); font-size:13px; }
+  /* toolbar */
+  .toolbar { display:flex; align-items:center; gap:10px; padding:8px 14px; background:var(--panel); border-bottom:1px solid var(--border); }
+  .tool-btn { width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+  .tool-btn:hover { background:var(--raised); color:var(--text); }
+  .crumb { flex:1; display:flex; align-items:center; gap:5px; color:var(--muted); overflow:hidden; }
+  .crumb b { color:var(--text); font-weight:500; }
+  .crumb .sep { color:var(--faint); }
+  /* tabs */
+  .tabs { display:flex; gap:2px; padding:8px 12px 0; }
+  .tab { display:flex; align-items:center; gap:8px; padding:7px 12px; color:var(--muted); border-radius:7px 7px 0 0; }
+  .tab.active { background:var(--accent); color:#1d1206; font-weight:600; }
+  .tab .dot { width:7px; height:7px; border-radius:2px; }
+  .tab .x { opacity:.5; }
+  /* main */
+  .main { flex:1; display:flex; min-height:0; }
+  .rail { width:170px; border-right:1px solid var(--border); padding:8px; overflow:hidden; }
+  .rail .ghead { font-size:10px; color:var(--text); font-weight:600; letter-spacing:.4px; margin:8px 4px 3px; }
+  .rail .ghead::before { content:"▾ "; color:var(--muted); }
+  .rail .conn { display:flex; align-items:center; gap:7px; padding:5px 6px; border-radius:6px; color:var(--muted); }
+  .rail .conn.active { background:var(--raised); color:var(--text); }
+  .rail .conn .ico { width:18px; height:16px; border-radius:4px; background:var(--raised); border:1px solid var(--border); display:grid; place-items:center; font-size:8px; font-weight:700; }
+  .rail .conn.active .ico { background:rgba(230,162,60,.15); border-color:rgba(230,162,60,.35); color:var(--accent); }
+  .tree { width:250px; border-right:1px solid var(--border); background:var(--panel); display:flex; flex-direction:column; }
+  .tree .search { margin:8px 8px 4px; padding:5px 9px; background:var(--raised); border:1px solid var(--border); border-radius:6px; color:var(--faint); font-size:12px; display:flex; gap:7px; align-items:center; }
+  .tree .head { padding:7px 10px; color:var(--faint); font-size:11px; }
+  .tree .row { display:flex; align-items:center; gap:7px; padding:4px 8px; color:var(--text); }
+  .tree .row:hover { background:var(--raised); }
+  .tree .row.sel { background:var(--raised); }
+  .tree .row.sel .name { color:var(--accent); }
+  .tree .row .name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
+  .tree .row .meta { font-size:10.5px; color:var(--muted); font-family:"SF Mono",Menlo,monospace; }
+  .ico-f { width:16px; height:16px; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; font-size:7px; font-weight:700; color:#fff; flex:0 0 auto; }
+  .folder { color:#dcb67a; font-size:13px; }
+  /* preview */
+  .preview { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .preview-bar { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--border); font-size:12px; color:var(--muted); }
+  .preview-bar .fmt { background:var(--raised); border:1px solid var(--border); padding:2px 9px; border-radius:20px; color:var(--text); font-size:11px; }
+  .preview-body { flex:1; overflow:auto; background:#0f1116; }
+  .code { font-family:"SF Mono",Menlo,Consolas,monospace; font-size:12.5px; line-height:1.7; padding:18px 0; }
+  .code .ln { display:inline-block; width:44px; text-align:right; padding-right:14px; color:#3d4450; user-select:none; }
+  .code .l { white-space:pre; }
+  .kw { color:#c678dd; } .fn { color:#61afef; } .st { color:#98c379; } .cm { color:#5c6370; } .ty { color:#e5c07b; } .nu { color:#d19a66; } .macro { color:#56b6c2; }
+  /* statusbar */
+  .statusbar { display:flex; align-items:center; padding:6px 14px; border-top:1px solid var(--border); font-size:11px; color:var(--faint); background:var(--panel); }
+  .statusbar .dot { width:7px; height:7px; border-radius:50%; background:#58c77c; margin-right:7px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="toolbar">
+    <div class="tool-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div class="tool-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 2.5v11M2.5 8h11"/></svg></div>
+    <div class="crumb"><b>本地</b><span class="sep">/</span><span>~/workspace/omniviewer</span></div>
+  </div>
+  <div class="tabs">
+    <div class="tab"><span class="dot" style="background:#e6a23c"></span>README.md<span class="x">×</span></div>
+    <div class="tab"><span class="dot" style="background:#dea584"></span>lib.rs<span class="x">×</span></div>
+    <div class="tab active"><span class="dot" style="background:#e6a23c"></span>main.rs<span class="x">×</span></div>
+  </div>
+  <div class="main">
+    <div class="rail">
+      <div class="ghead">本地</div>
+      <div class="conn active"><span class="ico">⌂</span><span>omniviewer</span></div>
+      <div class="conn"><span class="ico">⌂</span><span>design-docs</span></div>
+      <div class="ghead">GitHub</div>
+      <div class="conn"><span class="ico">GH</span><span>acme/omniviewer</span></div>
+      <div class="ghead">SFTP</div>
+      <div class="conn"><span class="ico">SF</span><span>sftp://dev-server</span></div>
+      <div class="ghead">S3</div>
+      <div class="conn"><span class="ico">S3</span><span>s3://my-bucket</span></div>
+    </div>
+    <div class="tree">
+      <div class="search">🔍 搜索文件…</div>
+      <div class="head">文件树 · 24</div>
+      <div class="row"><span class="ico-f folder">📁</span><span class="name" style="font-weight:600">src-tauri</span></div>
+      <div class="row"><span class="ico-f" style="background:#dea584">RS</span><span class="name">lib.rs</span><span class="meta">10-23 14:30:22</span></div>
+      <div class="row sel"><span class="ico-f" style="background:#dea584">RS</span><span class="name">main.rs</span><span class="meta">10-23 14:28:15</span></div>
+      <div class="row"><span class="ico-f" style="background:#f1dd35">JS</span><span class="name">main.ts</span><span class="meta">10-23 13:55:02</span></div>
+      <div class="row"><span class="ico-f" style="background:#cbcb41">{} </span><span class="name">package.json</span><span class="meta">10-23 13:54:40</span></div>
+      <div class="row"><span class="ico-f folder">📁</span><span class="name" style="font-weight:600">docs</span></div>
+      <div class="row"><span class="ico-f" style="background:#4a9eff">MD</span><span class="name">README.md</span><span class="meta">10-23 13:52:18</span></div>
+      <div class="row"><span class="ico-f" style="background:#4a9eff">MD</span><span class="name">README_zh.md</span><span class="meta">10-23 13:52:10</span></div>
+      <div class="row"><span class="ico-f folder">📁</span><span class="name" style="font-weight:600">crates</span></div>
+      <div class="row"><span class="ico-f" style="background:#e38c00">SQL</span><span class="name">index.sqlite</span><span class="meta">10-23 13:50:01</span></div>
+    </div>
+    <div class="preview">
+      <div class="preview-bar"><span>预览</span><span class="fmt">Rust</span><span style="color:var(--text)">main.rs</span></div>
+      <div class="preview-body"><div class="code">
+        <div class="l"><span class="ln">1</span><span class="cm">//! Omniviewer — 跨源万能文件预览</span></div>
+        <div class="l"><span class="ln">2</span></div>
+        <div class="l"><span class="ln">3</span><span class="macro">use</span> <span class="ty">tauri</span>::<span class="ty">Builder</span>;</div>
+        <div class="l"><span class="ln">4</span></div>
+        <div class="l"><span class="ln">5</span><span class="macro">fn</span> <span class="fn">main</span>() {</div>
+        <div class="l"><span class="ln">6</span>&nbsp;&nbsp;<span class="ty">Builder</span>::<span class="fn">default</span>()</div>
+        <div class="l"><span class="ln">7</span>&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">invoke_handler</span>(<span class="macro">generate_handler</span>![<span class="fn">read_file</span>, <span class="fn">search_index</span>, <span class="fn">search_remote</span>])</div>
+        <div class="l"><span class="ln">8</span>&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">run</span>(<span class="fn">generate_context</span>!())</div>
+        <div class="l"><span class="ln">9</span>&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">expect</span>(<span class="st">"error running app"</span>);</div>
+        <div class="l"><span class="ln">10</span>}</div>
+      </div></div>
+    </div>
+  </div>
+  <div class="statusbar"><span class="dot"></span>Omniviewer v0.5.0 · 就绪 · 本地 / omniviewer</div>
+</div>
+</body>
+</html>

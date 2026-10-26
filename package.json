@@ -1,0 +1,28 @@
+{
+  "name": "omniviewer",
+  "private": true,
+  "version": "0.5.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@file-viewer/capability-rtf": "^3.2.2",
+    "@file-viewer/preset-all": "^3.2.2",
+    "@file-viewer/web": "^3.2.2",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2.8.3",
+    "@tauri-apps/plugin-opener": "^2",
+    "highlight.js": "^11.12.0",
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "@file-viewer/vite-plugin": "^3.2.3",
+    "@tauri-apps/cli": "^2",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16"
+  }
+}
