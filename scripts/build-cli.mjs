@@ -26,7 +26,7 @@ execSync(
 // 2. 复制到 sidecar 目录（Tauri externalBin 约定：<name>-<triple>）
 const ext = process.platform === "win32" ? ".exe" : "";
 const targetSub = envTarget ? `${envTarget}/` : "";
-const src = `crates/cli/target/release/${targetSub}omniviewer${ext}`;
+const src = `crates/cli/target/${targetSub}release/omniviewer${ext}`;
 const destDir = "src-tauri/binaries";
 const dest = `${destDir}/omniviewer-cli-${host}${ext}`;
 
