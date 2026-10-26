@@ -2,7 +2,7 @@
 name = "omniviewer-cli"
 version = "0.5.0"
 description = "Omniviewer CLI：检索 / 预览 / 水印 / 缓存 / MCP"
-authors = ["you"]
+authors = ["AnyForge"]
 edition = "2024"
 
 [[bin]]

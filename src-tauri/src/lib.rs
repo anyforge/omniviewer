@@ -17,6 +17,84 @@ fn app_info() -> AppInfo {
     }
 }
 
+// ---- 检查更新（GitHub Releases） ----
+
+#[derive(Serialize)]
+struct UpdateInfo {
+    latest: String,
+    current: String,
+    url: String,
+    notes: String,
+    newer: bool,
+}
+
+/// semver 比较：a > b
+fn version_gt(a: &str, b: &str) -> bool {
+    fn parse(v: &str) -> Vec<u64> {
+        v.split('.').map(|s| s.parse::<u64>().unwrap_or(0)).collect()
+    }
+    let (va, vb) = (parse(a), parse(b));
+    for i in 0..va.len().max(vb.len()) {
+        let x = va.get(i).copied().unwrap_or(0);
+        let y = vb.get(i).copied().unwrap_or(0);
+        if x != y {
+            return x > y;
+        }
+    }
+    false
+}
+
+/// 查询 GitHub Releases 最新版本，与当前版本比较。
+#[tauri::command]
+async fn check_update() -> Result<UpdateInfo, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let resp = client
+        .get("https://api.github.com/repos/anyforge/omniviewer/releases/latest")
+        .header("User-Agent", "omniviewer-update-check")
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+        .map_err(|e| format!("请求失败: {e}"))?;
+    if resp.status() == reqwest::StatusCode::NOT_FOUND {
+        // 尚未发布任何 Release：视为无更新
+        let current = env!("CARGO_PKG_VERSION").to_string();
+        return Ok(UpdateInfo {
+            latest: current.clone(),
+            current,
+            url: "https://github.com/anyforge/omniviewer/releases".to_string(),
+            notes: String::new(),
+            newer: false,
+        });
+    }
+    if !resp.status().is_success() {
+        return Err(format!("HTTP {}", resp.status()));
+    }
+    let body = resp.text().await.map_err(|e| e.to_string())?;
+    let json: serde_json::Value = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+    let latest = json["tag_name"]
+        .as_str()
+        .unwrap_or("")
+        .trim_start_matches('v')
+        .to_string();
+    let url = json["html_url"]
+        .as_str()
+        .unwrap_or("https://github.com/anyforge/omniviewer/releases")
+        .to_string();
+    let notes = json["body"].as_str().unwrap_or("").to_string();
+    let current = env!("CARGO_PKG_VERSION").to_string();
+    let newer = !latest.is_empty() && version_gt(&latest, &current);
+    Ok(UpdateInfo {
+        latest: if latest.is_empty() { current.clone() } else { latest },
+        current,
+        url,
+        notes,
+        newer,
+    })
+}
+
 // ---- 本地文件（薄封装 core） ----
 
 #[tauri::command]
@@ -634,6 +712,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             app_info,
+            check_update,
             read_file,
             list_dir,
             read_file_range,

@@ -2,7 +2,7 @@
 name = "omniviewer"
 version = "0.5.0"
 description = "Omniviewer — 跨源万能文件预览（本地 / GitHub / GitLab / SFTP / WebDAV / S3）"
-authors = ["you"]
+authors = ["AnyForge"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

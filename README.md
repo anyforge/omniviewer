@@ -88,6 +88,10 @@ omniviewer version               # print version
 
 ## Getting started
 
+**Download a release** (no build needed) — grab the installer for macOS / Windows / Linux from the [latest release](https://github.com/anyforge/omniviewer/releases/latest). On macOS, first open it via right-click → Open to authorize the unsigned app (see [Installation](docs/en/install.md)).
+
+Or build from source:
+
 ```bash
 pnpm install
 pnpm tauri dev        # run the desktop app (first Rust build is slow)

@@ -2,7 +2,7 @@
 name = "omniviewer-core"
 version = "0.5.0"
 description = "Omniviewer 核心库：抽取 + 索引 + 搜索 + 水印 + 缓存 + 状态（GUI 与 CLI 共用）"
-authors = ["you"]
+authors = ["AnyForge"]
 edition = "2024"
 
 [lib]

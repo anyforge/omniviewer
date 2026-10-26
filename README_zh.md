@@ -88,6 +88,10 @@ omniviewer version               # 输出版本号
 
 ## 快速开始
 
+**直接下载发行版**（免编译）—— 从 [最新 Release](https://github.com/anyforge/omniviewer/releases/latest) 下载 macOS / Windows / Linux 安装包；macOS 首次打开需右键 → 打开授权（详见 [安装说明](docs/zh/install.md)）。
+
+或从源码构建：
+
 ```bash
 pnpm install
 pnpm tauri dev        # 运行桌面应用（首次编译 Rust 较慢）

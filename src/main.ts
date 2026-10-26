@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import { open, save, message } from "@tauri-apps/plugin-dialog";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { open, save, message, confirm } from "@tauri-apps/plugin-dialog";
+import { revealItemInDir, openUrl } from "@tauri-apps/plugin-opener";
 import { defineFileViewerElement } from "@file-viewer/web";
 import "@file-viewer/capability-rtf"; // RTF 预览（opt-in 能力）
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
@@ -525,7 +525,11 @@ const I18N: Record<Lang, Record<string, string>> = {
     "settings.about.author": "作者",
     "settings.about.update": "更新",
     "settings.about.checkUpdate": "检查更新",
-    "settings.about.notAvail": "更新检查尚未接入（发布到 GitHub 后可用）",
+    "settings.about.newer": "发现新版本 v{v}，是否前往下载页？",
+    "settings.about.latest": "已是最新版本",
+    "settings.about.download": "前往下载",
+    "settings.about.later": "以后再说",
+    "settings.about.checkFailed": "检查更新失败，请检查网络后重试",
     "settings.about.cli": "omniviewer CLI",
     "settings.about.installCli": "安装 CLI 到 PATH",
     "settings.about.cliHint": "安装后可在终端直接运行 omniviewer（~/.local/bin）",
@@ -702,7 +706,11 @@ const I18N: Record<Lang, Record<string, string>> = {
     "settings.about.author": "Author",
     "settings.about.update": "Update",
     "settings.about.checkUpdate": "Check for Updates",
-    "settings.about.notAvail": "Update check not wired yet (available after GitHub release)",
+    "settings.about.newer": "New version v{v} is available. Go to the download page?",
+    "settings.about.latest": "You're on the latest version",
+    "settings.about.download": "Download",
+    "settings.about.later": "Later",
+    "settings.about.checkFailed": "Update check failed. Check your network and try again.",
     "settings.about.cli": "omniviewer CLI",
     "settings.about.installCli": "Install CLI to PATH",
     "settings.about.cliHint": "After install, run `omniviewer` in terminal (~/.local/bin)",
@@ -1898,8 +1906,24 @@ function setupSettingsModal() {
   const modal = $("settings-modal");
   if (!modal) return;
   setupSettingsTabs();
-  $("check-update")?.addEventListener("click", () => {
-    message(t("settings.about.notAvail"), { title: t("settings.about.checkUpdate"), kind: "info" });
+  $("check-update")?.addEventListener("click", async () => {
+    try {
+      const info = await invoke<{ latest: string; current: string; url: string; notes: string; newer: boolean }>("check_update");
+      if (info.newer) {
+        const go = await confirm(t("settings.about.newer").replace("{v}", info.latest), {
+          title: t("settings.about.checkUpdate"),
+          kind: "info",
+          okLabel: t("settings.about.download"),
+          cancelLabel: t("settings.about.later"),
+        });
+        if (go) await openUrl(info.url);
+      } else {
+        await message(t("settings.about.latest"), { title: t("settings.about.checkUpdate"), kind: "info" });
+      }
+    } catch (e) {
+      console.error("检查更新失败", e);
+      await message(t("settings.about.checkFailed"), { title: t("settings.about.checkUpdate"), kind: "error" });
+    }
   });
   const bind = (id: string, key: keyof Settings, num: boolean) => {
     document.querySelectorAll(`#${id} .opt`).forEach((el) => {
